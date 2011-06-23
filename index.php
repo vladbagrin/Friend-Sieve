@@ -25,8 +25,8 @@
 	} else {
 	    $scope = 'email,offline_access';
 	    $params = array('scope' => $scope, 'redirect_uri' => $app_addr);
-		$login = $fb->getLoginUrl($params);
-		echo $js . "'$login';</script>";
+	    $login = $fb->getLoginUrl($params);
+        echo $js . "'$login';</script>";
         exit;
 	}
 ?>
