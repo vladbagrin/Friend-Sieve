@@ -23,9 +23,9 @@
 		$email = $user_info['email'];
 		echo "Hello, $name<br>Your email is: $email";
 	} else {
-		$login = $fb->getLoginUrl(array(
-										'scope' => 'email,offline_access',
-										'redirect_uri' => $app_addr));
+	    $scope = 'email,offline_access';
+	    $params = array('scope' => $scope, 'redirect_uri' => $app_addr);
+		$login = $fb->getLoginUrl($params);
 		echo $js . "'$login';</script>";
         exit;
 	}
