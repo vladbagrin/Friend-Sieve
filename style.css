@@ -1,0 +1,54 @@
+div.friend
+{
+	height: 50px;
+	width: 450px;
+	margin-left: auto;
+	margin-right: auto;
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-top-color: #D8D2EC;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+img.friend
+{
+	float: left;
+}
+
+div.friendText
+{
+	height: 30px;
+	margin-left: 60px;
+}
+
+a.friend, a.friend:visited
+{
+	visibility: hidden;
+	float: right;
+	color: white;
+	font-family: "lucida grande", tahoma, verdana, arial, sans-serif;
+	font-weight: bold;
+	background-color: #3b5998;
+	text-decoration: none;
+	padding: 3px 2px 3px 2px;
+	position: relative;
+	top: -17px;
+}
+
+a.friend:hover
+{
+	background-color: #5b79b8;
+}
+
+p.name, p.status
+{
+	padding: 0px;
+	margin: 0px;
+}
+
+p.status
+{
+	font-style: italic;
+	color: #989898;
+}
