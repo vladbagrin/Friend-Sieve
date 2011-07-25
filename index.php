@@ -45,7 +45,7 @@ echo "You have $f_num friends.<br>";
 ?>
 
 </div>
-<p>For now, this application will list you friends and indicate how they interracted with you lately (eg: inbox, pokes, photo tags, etc.). The list is sorted in descending order by amount of interraction.
+<p>For now, this application will list your friends and indicate how they interracted with you lately (eg: inbox, pokes, photo tags, etc.). The list is sorted in descending order by amount of interraction.
 </p>
 <p>Move the cursor over a friend info-box to get a link to his profile.</p>
 <?php

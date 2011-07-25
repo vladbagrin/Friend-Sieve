@@ -97,7 +97,13 @@ function batchRequest($fb, $apiCalls) {
 	$queries = array();
 	
 	foreach ($apiCalls as $call) {
-		array_push($queries, array('method' => 'GET', 'relative_url' => urlencode("/me/$call")));
+
+		// Temporary fix
+		$to = ",to";
+		if ($call == "photos") {
+			$to = "";
+		}
+		array_push($queries, array('method' => 'GET', 'relative_url' => urlencode("/me/$call?fields=from$to&since=1199145600&until=today&limit=1000000")));
 	}
 
 	$res = $fb->api('/?batch=' . json_encode($queries), 'POST');
