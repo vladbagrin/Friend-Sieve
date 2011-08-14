@@ -7,15 +7,28 @@
  * 
  * @return List of friend ID's, who interracted
  */
-function checkInterraction($fb, $type) {
-    $res = $fb->api("/me/$type");
-	$res = $res["data"];
+function checkInterraction($res) {
 	$list = array();
 
     foreach ($res as $entry) {
+		if (array_key_exists('updated_time', $entry)) {
+			$time = $entry['updated_time'];
+		} else if (array_key_exists('created_time', $entry)) {
+			$time = $entry['created_time'];
+		} else {
+			continue;
+		}
+		
         if (array_key_exists('from', $entry)) {
             $from = $entry['from'];
-            $list[$from['id']] = $from['name'];
+			$fromId = $from['id'];
+			
+			// Marking interractions with the same type but with distinct dates
+			if (array_key_exists($fromId, $list)) {
+				array_push($list[$fromId], $time);
+			} else {
+				$list[$fromId] = array($time);
+			}
         }
 
         if (array_key_exists('to', $entry)) {
@@ -25,41 +38,13 @@ function checkInterraction($fb, $type) {
 				$to = $entry['to'];
 			}
             foreach ($to as $user) {
-		        $list[$user['id']] = $user['name'];
-            }
-        }
-	}
-
-    return $list;
-}
-
-/**
- * @brief Like checkInterraction but without the API call
- *
- * Very important: json_decode messes up the data representation. Now everything is an object.
- *
- * @param res Response from the previous batch request
- */
-function shortCheckInterraction($res) {
-	$list = array();
-
-    foreach ($res as $entry) {
-        if (property_exists($entry, 'from')) {
-            $from = $entry->from;
-			if (gettype($from) == "object") {
-				$list["$from->id"] = $from->name;
-			}
-        }
-
-        if (property_exists($entry, 'to')) {
-			if (property_exists($entry->to, 'data')) {
-				$to = $entry->to->data;
-			} else {
-				$to = $entry->to;
-			}
-            foreach ($to as $user) {
-				if (gettype($user) == "object") {
-					$list["$user->id"] = $user->name;
+				$toId = $user['id'];
+			
+				// Marking interractions with the same type but distinct dates
+				if (array_key_exists($toId, $list)) {
+					array_push($list[$toId], $time);
+				} else {
+					$list[$toId] = array($time);
 				}
             }
         }
@@ -77,12 +62,42 @@ function shortCheckInterraction($res) {
  */
 function crossCheck($main, $sec, $message) {
     $list = $main->getList();
-    foreach ($sec as $id => $user) {
+	$minTime = $main->getLowerTimeLimit();
+	$diffTime = time() - $minTime; // Maximum time interval
+
+    foreach ($sec as $id => $formattedTimeList) {
         if (array_key_exists($id, $list)) {
             $friend = $list[$id];
-            $friend->updateStatus($message);
+			
+			foreach ($formattedTimeList as $formattedTime) {
+				$time = strtotime($formattedTime); // standard Unix time in seconds
+				$score = computeScore($time, $minTime, $diffTime);
+				if ($message == "home") {
+					$score = round($score / 10); // Home is much less useful
+				}
+				$friend->updateStatus($message, $score, $time);
+			}
         }
     }
+}
+
+/**
+ * @brief Applies the score formula.
+ *
+ * The scale is logarithmic. Values are in seconds.
+ *
+ * @param createdTime When the entry was created
+ * @param minTime Lower limit of entry created time
+ * @param diffTime Maximum selected time interval
+ *
+ * @return Score - from 10 to 100
+ */
+function computeScore($createdTime, $minTime, $diffTime) {
+	//$score = round(log($createdTime - $minTime + M_E) / log($diffTime) * 100);
+	$score = round(($createdTime - $minTime) / $diffTime * 100);
+	$score = min(100, $score);
+	$score = max(1, $score);
+	return $score;
 }
 
 /**
@@ -90,10 +105,11 @@ function crossCheck($main, $sec, $message) {
  *
  * @param fb Facebook API wrapper
  * @param apiCalls Array of data to be retrieved
+ * @param since String representing difference in time (for strtotime): -1week, -1month, -3month, -6month, -1year, -30year
  *
  * @return Array of responses
  */
-function batchRequest($fb, $apiCalls) {
+function batchRequest($fb, $apiCalls, $since) {
 	$queries = array();
 	
 	foreach ($apiCalls as $call) {
@@ -103,10 +119,27 @@ function batchRequest($fb, $apiCalls) {
 		if ($call == "photos") {
 			$to = "";
 		}
-		array_push($queries, array('method' => 'GET', 'relative_url' => urlencode("/me/$call?fields=from$to&since=1199145600&until=today&limit=1000000")));
+		array_push($queries, array('method' => 'GET', 'relative_url' => urlencode("/me/$call?fields=from$to&since=" . strtotime($since) . "&until=today&limit=1000000")));
 	}
 
 	$res = $fb->api('/?batch=' . json_encode($queries), 'POST');
 	return $res;
+}
+
+/**
+ * @brief Create a list of page links
+ *
+ * @param pagesize Number of elements on page (important for links)
+ * @param total Total number of pages
+ * @param current Current page (different style, not a link)
+ */
+function genPageLinks($pagesize, $total, $current) {
+	for ($i = 1; $i <= $total; $i++) {
+		if ($i == $current) {
+			echo $i . "&nbsp";
+		} else {
+			echo "<a href=\"list.php?pagesize=$pagesize&page=$i\">$i</a>\n";
+		}
+	}
 }
 ?>

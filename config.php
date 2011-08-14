@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once('facebook/src/facebook.php');
 
 // App information
@@ -11,7 +12,6 @@ $js = "<script type='text/javascript'>top.location.href =";
 
 // Facebook API wrapper
 $fb = new Facebook(array('appId' => $app_id, 'secret' => $app_secret));
-
 $user = $fb->getUser();
 
 // User has to log in

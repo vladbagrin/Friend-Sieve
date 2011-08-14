@@ -41,7 +41,7 @@ a.friend:hover
 	background-color: #5b79b8;
 }
 
-p.name, p.status
+p.name, p.status, p.score
 {
 	padding: 0px;
 	margin: 0px;
@@ -51,4 +51,22 @@ p.status
 {
 	font-style: italic;
 	color: #989898;
+}
+
+a.score:hover
+{
+	background-color: #989898;
+	color: white;
+	cursor: pointer;
+}
+
+td
+{
+	text-align: right;
+}
+
+table
+{
+	margin-left: auto;
+	margin-right: auto;
 }
