@@ -1,111 +1,93 @@
+<?php
+require_once('facebook/src/facebook.php');
+require_once('db.php');
+require_once('friend_list.php');
+require_once('utils.php');
+header('Content-Type: text/html; charset=utf-8');
+header('p3p: CP="NOI ADM DEV PSAi COM NAV OUR OTR STP IND DEM"');
+session_start();
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
-<?php
-// require_once('config.php');
-require_once('friend_list.php');
-require_once('utils.php');
+<script type="text/javascript" src="helper.js"></script>
+<link rel="stylesheet" type="text/css" href="facebook_style/fb-buttons.css" />
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script src="http://connect.facebook.net/en_US/all.js"></script>
+<script>
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-25518956-1']);
+_gaq.push(['_trackPageview']);
 
-echo "<style>\n";
-include('style.css');
-echo "</style>\n";
-?>
-<div id="fb-root"></div>
-<script type="text/javascript">
-window.fbAsyncInit = function() {
-        FB.init({appId: '139006766174656', status: true, cookie: true, xfbml: true});
-    };
-    
-    //Load the SDK asynchronously
-    (function() {
-        var e = document.createElement('script'); e.async = true;
-        e.src = document.location.protocol +
-          '//connect.facebook.net/en_US/all.js';
-        document.getElementById('fb-root').appendChild(e);
-    }());
-
-function load()
-{
-	var frame = document.getElementById('frame');
-	var intro = document.getElementById('intro');
-	var pagesize = document.getElementById('pagesize');
-	pagesize = pagesize.options[pagesize.selectedIndex].value;
-	
-	var entryHeight = 72;
-	var listHeight = pagesize * entryHeight * 2;
-	var frameHeight = intro.offsetHeight + listHeight;
-	
-	frame.height = listHeight;
-	FB.Canvas.setSize({ width: 700, height: frameHeight });
-}
-
-/**
- * @brief Common form data
- *
- * @return Link to list page with basic data
- */
-function createBasicLink() {
-	var order = document.getElementById('order');
-	order = order.options[order.selectedIndex].value;
-	var pagesize = document.getElementById('pagesize');
-	pagesize = pagesize.options[pagesize.selectedIndex].value;
-	return "list.php?pagesize=" + pagesize + "&order=" + order;
-}
-
-function refreshList() {
-	var frame = document.getElementById('frame');
-	var since = document.getElementById('since');
-	since = since.options[since.selectedIndex].value;
-	frame.src = createBasicLink() + "&refresh=true" + "&since=" + since;
-}
-
-function updateData() {
-	var frame = document.getElementById('frame');
-	var since = document.getElementById('since');
-	since = since.options[since.selectedIndex].value;
-	frame.src = createBasicLink() + "&refresh=true" + "&since=" + since + "&update=true";
-}
-
-function changePageSize() {
-	var frame = document.getElementById('frame');
-	frame.src = createBasicLink();
-}
-
-function changeOrder() {
-	var frame = document.getElementById('frame');
-	frame.src = createBasicLink() + "&resort=true";
-}
+(function() {
+var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
 </script>
 </head>
 <body>
-<div id="intro">
-<div>
-<?php
-session_start();
-require_once('facebook/src/facebook.php');
-require_once('db.php');
+<div id="fb-root"></div>
+<script type="text/javascript">
+FB.init({
+appId  : '139006766174656',
+status : true, // check login status
+cookie : true, // enable cookies to allow the server to access the session
+xfbml  : true, // parse XFBML
+//channelUrl : 'http://WWW.MYDOMAIN.COM/channel.html', // channel.html file
+oauth  : true // enable OAuth 2.0
+});
 
-// App information
-$app_secret = '7341d578889ab343d851284665976ea8';
-$app_id = '139006766174656';
-$app_addr = 'http://apps.facebook.com/unvitation/';
-
-// Part of redirect script
-$js = "<script type='text/javascript'>top.location.href =";
-
-// Facebook API wrapper
-$fb = new Facebook(array('appId' => $app_id, 'secret' => $app_secret));
-$user = $fb->getUser();
-
-// User has to log in
-if (!$user) {
-    $scope = 'email,offline_access,read_mailbox,read_stream,friends_photo_video_tags,user_photo_video_tags';
-    $params = array('scope' => $scope, 'redirect_uri' => $app_addr);
-    $login = $fb->getLoginUrl($params);
-	echo $js . "'$login';</script>";
-    exit;
+function share_with_friends() {
+	if (FB != null) {
+		FB.ui({
+			method: 'apprequests',
+			message: 'See who are the friends that interacted with you most.'
+		});
+	}
 }
-$_SESSION["fb"] = $fb;
+
+function post_to_wall() {
+	var called_before = false; // Another hack - callback being called twice!
+	var count = 5; // 'tis what I chose
+	var since = document.getElementById('since');
+	since = since.options[since.selectedIndex].value;
+	send_top_friends_request(count, since, function (data) {
+		if (called_before) {
+			return;
+		} else {
+			called_before = true;
+		}
+		var desc = 'Since ' + date_string_map[since] + ', my top ' + count + ' friends by interaction are:' + 
+				'<center></center>' + data;
+		FB.ui({
+			method: 'feed',
+			name: 'Friend Sieve',
+			link: 'http://apps.facebook.com/friend-sieve/',
+			//picture: 'http://fbrell.com/f8.jpg',
+			caption: ' ',
+			description: desc,
+			actions: [
+				{
+					name: 'Find out yours',
+					link: app_address
+				}
+			]
+		},
+		function(response) {
+			// Duly noted
+		});
+	});
+}
+</script>
+<div id="intro">
+<?php
+// User has to log in
+$fb = logged_in_check();
+
+//$_SESSION["fb"] = $fb;
+$user = $fb->getUser();
+$_SESSION["user_id"] = $user;
 
 // Database stuff
 $db = new dbWrapper();
@@ -122,54 +104,58 @@ if ($dbUserInfo == null) {
 	$name = $dbUserInfo["name"];
 }
 
-echo "<img style=\"float:left\" src=\"http://graph.facebook.com/$user/picture\"><br>";
-echo "Hello, $name!<br>";
-
-// Retrieving friends list
-$fql = "SELECT uid2 FROM friend WHERE uid1=$user";
-$friends = $fb->api(array(
-	'method' => 'fql.query',
-	'query' => $fql));
-
-$f_num = count($friends); // Friends in list
-echo "You have $f_num friends.<br>";
 ?>
-
+<?php echo "<img style=\"float:left\" src=\"http://graph.facebook.com/$user/picture\">"; ?>
+<span id="ginormousAppName">Friend Sieve</span>
+<a class="uibutton confirm" style="float:right" href="feedback_form.php">Feedback</a>
+<br>
+<div style="margin-left:10px;display:inline">
+	<iframe src="http://www.facebook.com/plugins/like.php?app_id=199210346810336&amp;href=http%3A%2F%2Fapps.facebook.com%2Ffriend-sieve%2F&amp;send=false&amp;layout=button_count&amp;width=500&amp;show_faces=false&amp;action=recommend&amp;colorscheme=light&amp;font&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:500px; height:35px;" allowTransparency="true"></iframe>
 </div>
-<p>For now, this application will list your friends and indicate how they interracted with you (eg: inbox, pokes, photo tags, etc.). The list is sorted in descending order by amount
-of interraction.
+<p id="introText">Sort your friends by how much they interact with you, how much they are connected to your social network or by how much you are alike.
+Decide who are your most valuable friends or see whom you can safely send an unvitation.
 </p>
-<p>Move the cursor over a friend info-box to get a link to his profile.</p>
-
-<input id="refresh" type="button" value="Update now" onclick="updateData()">
-
-<span style="float:right;">
-Since:
-<select id="since" onchange="refreshList()">
-	<option value="-1week">Last week</>
-	<option value="-1month">Last month</>
-	<option value="-3month">Last 3 months</>
-	<option value="-6month">Last half year</>
-	<option value="-1year">Last year</>
-	<option value="-2year">Last 2 years</>
-<select>
-Page size:
-<select id="pagesize" onchange="changePageSize()">
-	<option value="10">10</option>
-	<option value="25">25</option>
-	<option value="50">50</option>
-	<option value="100">100</option>
-</select>
-Order:
-<select id="order" onchange="changeOrder()">
-	<option value="desc">Descending</>
-	<option value="asc">Ascending</>
-</select>
-</span>
+<div class="uibutton-toolbar">
+	<div class="uibutton-group">
+		<a class="uibutton confirm" href="#" onclick="share_with_friends()">Share</a>
+		<a class="uibutton confirm" href="#" onclick="post_to_wall()">Publish</a>
+	</div>
+	
+	<span class="toolbar">
+	<label for="since">Since:</label>
+	<select id="since" onchange="refreshList()">
+		<option value="-1week">Last week</>
+		<option value="-1month">Last month</>
+		<option value="-3month">Last 3 months</>
+		<option value="-6month">Last half year</>
+		<option selected value="-1year">Last year</>
+		<option value="-2year">Last 2 years</>
+	</select>
+	<label for="pagesize">Page size:</label>
+	<select id="pagesize" onchange="changePageSize()">
+		<option value="10">10</option>
+		<option value="25">25</option>
+		<option value="50">50</option>
+		<option value="100">100</option>
+	</select>
+	<label for="order">Order:</label>
+	<select id="order" onchange="changeOrder()">
+		<option value="desc">Desc</>
+		<option value="asc">Asc</>
+	</select>
+	<label for="by">By:</label>
+	<select id="by" onchange="changeOrder()">
+		<option value="score">Score</>
+		<option value="mutual">Mutual friends</>
+	</select>
+	<a class="uibutton icon add" onclick="updateData()">Update</a>
+	</span>
 </div>
-
-<iframe id="frame" src="list.php" width="700" height = "500" frameborder="0" scrolling="no" onload="load()">
-	Your browser doesn't support iframes
-</iframe>
+</div>
+<br>
+<div id="list"></div>
+<script type="text/javascript">
+    sendListRequest(createBasicLink() + '&refresh=true')
+</script>
 </body>
 </html>

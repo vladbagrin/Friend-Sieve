@@ -5,7 +5,7 @@ require_once('facebook/src/facebook.php');
 // App information
 $app_secret = '7341d578889ab343d851284665976ea8';
 $app_id = '139006766174656';
-$app_addr = 'http://apps.facebook.com/unvitation/';
+$app_addr = 'http://apps.facebook.com/friend-sieve/';
 
 // Part of redirect script
 $js = "<script type='text/javascript'>top.location.href =";
