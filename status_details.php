@@ -46,6 +46,7 @@
 	}
 	
 	function formatStatus($status) {
+		echo "<br>";
 		echo "<table class=\"details\">\n";
 
 		$dl = tinyStatusList($status);
