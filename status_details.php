@@ -5,15 +5,6 @@
 	session_start();
 
 	$startTime = microtime(TRUE) * 1000; // Time processing started
-	
-	/*if (!isset($_SESSION["friendlist"])) {
-		throw new Exception("Your session has expired: Please reload the page");
-	}
-	if (!isset($_GET["id"])) {
-		throw new Exception("Incorrect request parameter - friend ID: Please contact the administrator");
-	}*/
-	
-	//$list = $_SESSION["friendlist"];
 	$id = $_GET["id"];
 	
 	$fb = logged_in_check();
@@ -26,7 +17,12 @@
 		throw new Exception("Friend ID not in list");
 	}
 	
-		/**
+	$endTime = microtime(TRUE) * 1000;
+	if (defined("debug")) {
+		echo "Time to process: " . ($endTime - $startTime) . "ms";
+	}
+	
+	/**
 	 * @brief Makes a shorter status list for the HTML table
 	 *
 	 * @param status Status object
@@ -51,40 +47,10 @@
 	
 	function formatStatus($status) {
 		echo "<table class=\"details\">\n";
-		/*echo 	"\t<tr>\n" . 
-					"\t\t<th>Type</td>\n" .
-					"\t\t<th>Date</td>\n" .
-					"\t\t<th>Score</td>\n" .
-				"\t<tr>\n";*/
 
 		$dl = tinyStatusList($status);
 		$dl = unfoldStatus($dl);
-		//print_r($dl);
 		usort($dl, "dateSorter");
-		/*foreach ($dl as $name => $entries) {
-			foreach ($entries as $date => $entry) {
-				$dateSec = strtotime($date);
-				if ($dateSec >= strtotime("today")) {
-					$date = "Today";
-				} else if ($dateSec >= strtotime("yesterday") && $dateSec < strtotime("today")) {
-					$date = "Yesterday";
-				} else {
-					$date = date("j/m/Y", $date);
-				}
-				
-				$shownName = "";
-				if ($entry[0] > 1) {
-					$shownName = $entry[0] . "x";
-				}
-				$shownName = $shownName . ucwords($name);
-				echo "\t<tr>\n" .
-						"\t\t<td>$shownName</td>\n" .
-						"\t\t<td>$date</td>\n" .
-						"\t\t<td>$entry[1]</td>\n" .
-					"\t<tr>\n";
-			}
-		}*/
-		
 		foreach ($dl as $entry) {
 			$date = $entry[1];
 			$shownName = "";
@@ -142,96 +108,5 @@
 			return $ma < $mb ? 1 : -1;
 		}
 		return $ya < $yb ? 1 : -1;
-	}
-	
-	/*function formatStatus($status) {
-		echo "<table>\n";
-		/*echo 	"\t<tr>\n" . 
-					"\t\t<th>Type</td>\n" .
-					"\t\t<th>Date</td>\n" .
-					"\t\t<th>Score</td>\n" .
-				"\t<tr>\n";*/
-
-		/*foreach ($status->getList() as $name => $type) {
-			foreach ($type as $entry) {
-				$date = $entry->date;
-				if ($date >= strtotime("today")) {
-					$date = "Today";
-				} else if ($date >= strtotime("yesterday") && $date < strtotime("today")) {
-					$date = "Yesterday";
-				} else {
-					$date = date("j/m/Y", $entry->date);
-				}
-				echo "\t<tr>\n" .
-						"\t\t<td>" . ucwords($name) . "</td>\n" .
-						"\t\t<td>$date</td>\n" .
-						"\t\t<td>$entry->score</td>\n" .
-					"\t<tr>\n";
-			}
-		}
-		
-		echo "</table>\n";
-	}*/
-	
-	/*if (!isset($_SESSION["user_id"])) {
-		throw new Exception("Your session has expired: Please reload the page");
-	}
-	if (!isset($_GET["id"])) {
-		throw new Exception("Incorrect request parameter - friend ID: Please contact the administrator");
-	}
-	if (!isset($_GET["since"])) {
-		throw new Exception("Incorrect request parameter - minimum date: Please contact the administrator");
-	}
-
-	$user_id = $_SESSION["user_id"];
-	$friend_id = $_GET["id"];
-	$since = strtotime($_GET["since"]);
-	$diffTime = time() - $since; // Maximum time interval
-	
-	if (isset($_SESSION["debug"])) {
-		echo "Internal variables:<br>";
-		echo "user_id: $user_id<br>";
-		echo "friend_id: $friend_id<br>";
-		echo "string since: " . $_GET["since"] . "<br>";
-		echo "since: $since<br>";
-	}
-	$db = new dbWrapper();
-	$result = $db->getStatusRaw($user_id, $friend_id, $since);
-	if ($result == FALSE) {
-		throw new Exception("No data was found in the database");
-	}
-	
-	// Draw the table
-	echo "<table>\n";
-	echo 	"\t<tr>\n" . 
-					"\t\t<th>Type</td>\n" .
-					"\t\t<th>Date</td>\n" .
-					"\t\t<th>Score</td>\n" .
-				"\t<tr>\n";
-	while ($row = mysql_fetch_assoc($result)) {
-		$type = $row["type"];
-		$date = $row["date"];
-		$score = computeScore($date, $since, $diffTime);
-		
-		if ($date >= strtotime("today")) {
-			$date = "Today";
-		} else if ($date >= strtotime("yesterday") && $date < strtotime("today")) {
-			$date = "Yesterday";
-		} else {
-			$date = date("j/m/Y", $date);
-		}
-		
-		echo "\t<tr>\n" .
-				"\t\t<td>$type</td>\n" .
-				"\t\t<td>$date</td>\n" .
-				"\t\t<td>$score</td>\n" .
-			"\t<tr>\n";
-	}
-	echo "</table>\n";
-	*/
-	
-	$endTime = microtime(TRUE) * 1000;
-	if (defined("debug")) {
-		echo "Time to process: " . ($endTime - $startTime) . "ms";
 	}
 ?>

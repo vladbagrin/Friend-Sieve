@@ -2,7 +2,8 @@ var details = null; // Table with status details
 var loadingGif = '<img class=\"loading\" src=\"loading.gif\" />'; // Image to show when loading
 var imageHeight = 32; // Height in pixels of the loading animation
 var top_friends_url = 'top_friends.php';
-var app_address = 'http://apps.facebook.com/friend-sieve';
+var app_address = 'http://apps.facebook.com/friend-sieve-devel/';
+var app_id = '152039924883298';
 var date_string_map = {
 	'-1week': 'last week',
 	'-1month': 'last month',
@@ -14,18 +15,6 @@ var date_string_map = {
 
 // ID for common elements
 var sinceElementID = 'since';
-
-/*window.fbAsyncInit = function() {
-        FB.init({appId: '139006766174656', status: true, cookie: true, xfbml: true});
-		alert('Loaded');
-    };
-    
-//Load the SDK asynchronously
-function loadSDK() {
-    var e = document.createElement('script'); e.async = true;
-    e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
-    document.getElementById('fb-root').appendChild(e);
-};*/
 
 /**
  * @brief Common form data
@@ -62,6 +51,18 @@ function changeOrder() {
 
 function changePage(page) {
 	sendListRequest(createBasicLink() + "&page=" + page);
+}
+
+function getFilteredList() {
+	var search_text = document.getElementById('search_text');
+	search_text = encodeURIComponent(search_text.value);
+	sendListRequest(createBasicLink() + "&filter=" + search_text + "&refresh=true");
+}
+
+function search_box_key_pressed(e) {
+	if (e.keyCode == 13) {
+		getFilteredList();
+	}
 }
 
 function sendListRequest(url) {

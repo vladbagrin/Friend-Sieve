@@ -10,6 +10,8 @@ session_start();
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
+<title>Friend Sieve</title>
+<meta property="og:title" content="Friend Sieve"/>
 <script type="text/javascript" src="helper.js"></script>
 <link rel="stylesheet" type="text/css" href="facebook_style/fb-buttons.css" />
 <link rel="stylesheet" type="text/css" href="style.css" />
@@ -29,12 +31,14 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 <body>
 <div id="fb-root"></div>
 <script type="text/javascript">
+var app_address = 'http://apps.facebook.com/friend-sieve-devel/';
+var app_id = '152039924883298';
+
 FB.init({
-appId  : '139006766174656',
+appId  : app_id,
 status : true, // check login status
 cookie : true, // enable cookies to allow the server to access the session
 xfbml  : true, // parse XFBML
-//channelUrl : 'http://WWW.MYDOMAIN.COM/channel.html', // channel.html file
 oauth  : true // enable OAuth 2.0
 });
 
@@ -63,9 +67,9 @@ function post_to_wall() {
 		FB.ui({
 			method: 'feed',
 			name: 'Friend Sieve',
-			link: 'http://apps.facebook.com/friend-sieve/',
-			//picture: 'http://fbrell.com/f8.jpg',
+			link: app_address,
 			caption: ' ',
+			picture: 'http://www.createit.ro/unvitation/pic_large.png',
 			description: desc,
 			actions: [
 				{
@@ -110,9 +114,9 @@ if ($dbUserInfo == null) {
 <a class="uibutton confirm" style="float:right" href="feedback_form.php">Feedback</a>
 <br>
 <div style="margin-left:10px;display:inline">
-	<iframe src="http://www.facebook.com/plugins/like.php?app_id=199210346810336&amp;href=http%3A%2F%2Fapps.facebook.com%2Ffriend-sieve%2F&amp;send=false&amp;layout=button_count&amp;width=500&amp;show_faces=false&amp;action=recommend&amp;colorscheme=light&amp;font&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:500px; height:35px;" allowTransparency="true"></iframe>
+	<iframe src="http://www.facebook.com/plugins/like.php?app_id=199210346810336&amp;href=http%3A%2F%2Fapps.facebook.com%2Ffriend-sieve-devel%2F&amp;send=false&amp;layout=button_count&amp;width=500&amp;show_faces=false&amp;action=recommend&amp;colorscheme=light&amp;font&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:500px; height:35px;" allowTransparency="true"></iframe>
 </div>
-<p id="introText">Sort your friends by how much they interact with you, how much they are connected to your social network or by how much you are alike.
+<p id="introText">Sort your friends by how much they interact with you or how much they are connected to your social network.
 Decide who are your most valuable friends or see whom you can safely send an unvitation.
 </p>
 <div class="uibutton-toolbar">
@@ -152,7 +156,11 @@ Decide who are your most valuable friends or see whom you can safely send an unv
 	</span>
 </div>
 </div>
-<br>
+<div class="search">
+	<input type="text" id="search_text" class="search" onkeypress="search_box_key_pressed(event)"/>
+	<a class="uibutton confirm" href="#" onclick="getFilteredList()">Search</a>
+</div>
+<br><br>
 <div id="list"></div>
 <script type="text/javascript">
     sendListRequest(createBasicLink() + '&refresh=true')

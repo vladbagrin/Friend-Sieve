@@ -19,26 +19,16 @@ ini_set('default_socket_timeout', $timeout_limit);
 set_time_limit($timeout_limit);
 
 // App information
-$app_secret = '7341d578889ab343d851284665976ea8';
-$app_id = '139006766174656';
-$app_addr = 'http://apps.facebook.com/friend-sieve/';
+$app_secret = '130bc2c51ff7a48f10036d18004c02aa';
+$app_id = '152039924883298';
+$app_addr = 'http://apps.facebook.com/friend-sieve-devel/';
 
 // Part of redirect script
 $js = "<script type=\"text/javascript\">top.location.href =";
 
 function logged_in_check() {
 	global $js, $app_addr, $app_secret, $app_id;
-	
-	/*if (!isset($_SESSION["fb"])) {
-		$fb = new Facebook(array('appId' => $app_id, 'secret' => $app_secret));
-		$_SESSION["fb"] = $fb;
-	} else {
-		$fb = $_SESSION["fb"];
-	}*/
 	$fb = new Facebook(array('appId' => $app_id, 'secret' => $app_secret));
-	
-	/*print_r($fb);
-	exit;*/
 	$user = $fb->getUser();
 	if (!$user) {
 		$scope = 'read_mailbox,read_stream,friends_photo_video_tags,user_photo_video_tags';
@@ -118,8 +108,6 @@ function prepare_friend_data($fb) {
 	
 	return $list;
 }
-
-//error_reporting(E_ALL);
 
 /**
  * @brief Get users that interacted in a specified way.
@@ -215,7 +203,6 @@ function crossCheck($main, $sec, $message) {
  */
 function computeScore($createdTime, $minTime, $diffTime) {
 	$score = round(log($createdTime - $minTime + M_E) / log($diffTime) * 100);
-	//$score = round(($createdTime - $minTime) / $diffTime * 100);
 	$score = min(100, $score);
 	$score = max(1, $score);
 	return $score;
@@ -247,6 +234,23 @@ function batchRequest($fb, $apiCalls, $since) {
 
 	$res = $fb->api('/?batch=' . json_encode($queries), 'POST');
 	return $res;
+}
+
+/* Select only the friend entries that match a search string */
+function filter_friend_list($friends, $search_terms) {
+	if (strlen($search_terms) == 0) {
+		return;
+	}
+	$search_terms = metaphone($search_terms);
+	$list = $friends->getList();
+	foreach ($list as $id => $friend) {
+		$name = $friend->__toString();
+		$name = metaphone($name);
+		if (strstr($name, $search_terms) == false) {
+			unset($list[$id]);
+		}
+	}
+	$friends->setList($list);
 }
 
 /**

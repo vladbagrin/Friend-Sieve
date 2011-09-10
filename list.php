@@ -25,10 +25,15 @@ if (isset($_GET["resort"]) && isset($_GET["order"]) && isset($_GET["by"])) {
 	$list->sort($_GET["order"], $_GET["by"]);
 }
 
+// Filter by search terms
+if (isset($_GET["filter"])) {
+	$search_terms = rawurldecode($_GET["filter"]);
+	filter_friend_list($list, $search_terms);
+}
+
 // Generate page links
 genPageLinks($pagesize, ceil($list->length() / $pagesize), $page);
 
 // List in nice HTML
 $list->toHTML($pagesize, $page);
-//error_reporting(E_ALL);
 ?>

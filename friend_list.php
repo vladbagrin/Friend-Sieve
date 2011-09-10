@@ -36,30 +36,16 @@ function helperSortMutual($a, $b, $asc) {
 }
 
 /**
- * @brief Sorting in ascending order
- */
-function helperSort_asc_score($a, $b) {
-	return helperSort($a, $b, -1);
-}
-
-/**
  * @brief Sorting in descending order
  */
-function helperSort_desc_score($a, $b) {
+function helperSort_score($a, $b) {
 	return helperSort($a, $b, 1);
 }
 
 /**
- * @brief Sorting in ascending order
- */
-function helperSort_asc_mutual($a, $b) {
-	return helperSortMutual($a, $b, -1);
-}
-
-/**
  * @brief Sorting in descending order
  */
-function helperSort_desc_mutual($a, $b) {
+function helperSort_mutual($a, $b) {
 	return helperSortMutual($a, $b, 1);
 }
 
@@ -272,6 +258,10 @@ class FriendList {
 		return $this->list;
 	}
 	
+	public function setList($list) {
+		$this->list = $list;
+	}
+	
 	public function length() {
 		return count($this->list);
 	}
@@ -307,8 +297,15 @@ class FriendList {
 	 * @param by Key to order by
 	 */
 	public function sort($order, $by) {
-		$function = "helperSort_" . $order . "_" . $by;
+		$function = "helperSort_" . $by;
 		uasort($this->list, $function);
+		$position = 1;
+		foreach ($this->list as $friend) {
+			$friend->set_position_in_list($position++);
+		}
+		if ($order == 'asc') {
+			$this->list = array_reverse($this->list, true);
+		}
 	}
 	
 	public function get_top_friends($number) {
@@ -326,6 +323,7 @@ class Friend {
 	private $status; // Amount of interaction with user / reason to remove
 	private $profile; // Profile URL
 	private $mutualFriendsCount; // Number of mutual friends
+	private $position_in_list;
 
 	/*
 	 * @param entry Array containing the friend's name, picture URL (small) and profile URL
@@ -351,6 +349,10 @@ class Friend {
 		}
 	}
 	
+	public function set_position_in_list($position) {
+		$this->position_in_list = $position;
+	}
+	
 	/**
 	 * @brief Determine the number of mutual friends
 	 *
@@ -359,13 +361,6 @@ class Friend {
 	public function countMutualFriends() {
 		return $this->mutualFriendsCount;
 	}
-	
-	public function get_mutual_friends($fb, $id, $friend_ids) {
-	    $query = "select uid2 from friend where uid1=$id and uid2 in $friend_ids";
-	    $mutual_friends = $fb->api(array('method' => 'fql.query', 'query' => $query));
-	    $this->mutualFriendsCount = count($mutual_friends);
-	}
-	
 		
 	public function set_mutual_friends($number) {
 		$this->mutualFriendsCount = $number;
@@ -391,7 +386,9 @@ class Friend {
 	 *
 	 */
 	public function toHTML($id) {
-		echo "<div id=\"$id\" class=\"friend\" onmouseover=\"linkHover('$id', true)\" onmouseout=\"linkHover('$id', false)\">\n" .
+		echo "<div  id=\"$id\" class=\"friend_data_container\"><div class=\"friend_position\">" .
+			"<span class=\"position_number\">$this->position_in_list</span></div>" .
+			"<div class=\"friend\">\n" .
 			"\t<img class=\"friend\" src=\"$this->pic\" />\n" .
 			"\t<div class=\"friendText\">\n" .
 			"\t\t<a href=\"$this->profile\" class=\"friend\" target=\"_blank\">$this->name</a>\n" .
@@ -399,7 +396,7 @@ class Friend {
 			"\t\t<a class=\"mutual_friends\" href=\"https://www.facebook.com/browse/?type=mutual_friends&uid=$id\" target=\"_blank\">" . $this->countMutualFriends() . " mutual friends</a>" .
 			"\t</div>\n" .
 			"\t\t<a class=\"uibutton icon next score\" onclick=\"requestDetails('$id')\">Score: " . $this->status->getScore() . "</a>\n" .
-			"<br></div>\n";
+			"<br></div>\n</div>";
 	}
 
 	/**
