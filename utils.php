@@ -4,13 +4,15 @@ require_once('db.php');
 require_once('friend_list.php');
 
 // In lieu of magic numbers - here we go
-//define("debug", TRUE);
+// define("debug", TRUE);
 $inbox_key_name = "inbox";
 $outbox_key_name = "outbox";
 $home_key_name = "home";
 $tag_key_name = "tagged";
 $score_percentage = array($home_key_name => 5, $inbox_key_name => 10, $outbox_key_name => 10, $tag_key_name => 20);
+$max_status_length = 40;
 $message_reply_window = 3600 * 24 * 3; // 3 days
+$update_interval = 3600 * 24; // at most 1 day/1 hour between forced updates
 $query_chunk_size = 200;
 $timeout_limit = 600;
 
@@ -18,10 +20,12 @@ ini_set('mysql.connect_timeout', $timeout_limit);
 ini_set('default_socket_timeout', $timeout_limit);
 set_time_limit($timeout_limit);
 
+error_reporting(E_ALL);
+
 // App information
-$app_secret = '130bc2c51ff7a48f10036d18004c02aa';
-$app_id = '152039924883298';
-$app_addr = 'http://apps.facebook.com/friend-sieve-devel/';
+$app_secret = 'hidden';
+$app_id = '139006766174656';
+$app_addr = 'https://apps.facebook.com/friend-sieve/';
 
 // Part of redirect script
 $js = "<script type=\"text/javascript\">top.location.href =";
@@ -43,12 +47,16 @@ function logged_in_check() {
 }
 
 function prepare_friend_data($fb) {
+	global $update_interval;
 	$user = $fb->getUser();
 	$db = new dbWrapper();
 	$storedData = $db->getUser($user);
+	$current_timestamp = time();
+	$last_update = $storedData["last_update"];
+	$is_fresh = false;
 
 	// Update now if this is the first time
-	if ($storedData["last_update"] == 0 || isset($_GET["update"])) {
+	if ($current_timestamp - $last_update > $update_interval || isset($_GET["update"])) {
 		$db->close();
 		
 		$startTime = mtime();
@@ -63,6 +71,8 @@ function prepare_friend_data($fb) {
 		$db->connect();
 		$list->dbDump($db, $fb);
 		$db->updateTime($user);
+		$is_fresh = true;
+		
 		if (defined("debug")) {
 			echo "Friend count after database update: " . count($list->getList()) . "<br>";
 		}
@@ -106,6 +116,9 @@ function prepare_friend_data($fb) {
 		$list = $_SESSION["friendlist"];
 	}
 	
+	if ($is_fresh) {
+		$list->set_fresh_data();
+	}
 	return $list;
 }
 
@@ -237,20 +250,63 @@ function batchRequest($fb, $apiCalls, $since) {
 }
 
 /* Select only the friend entries that match a search string */
-function filter_friend_list($friends, $search_terms) {
-	if (strlen($search_terms) == 0) {
+function filter_friend_list($friends, $pattern) {
+	$pattern = process_string($pattern);
+	if (strlen($pattern) == 0) {
 		return;
 	}
-	$search_terms = metaphone($search_terms);
+	$match_percent = 75;
+	$max_edits = floor(strlen($pattern) * (1 - $match_percent / 100));
+
 	$list = $friends->getList();
 	foreach ($list as $id => $friend) {
-		$name = $friend->__toString();
-		$name = metaphone($name);
-		if (strstr($name, $search_terms) == false) {
+		$name = $friend->indexable_name();
+		if (levenshtein_substr($pattern, $name, $max_edits) == false) {
 			unset($list[$id]);
 		}
 	}
 	$friends->setList($list);
+}
+
+function process_string($str) {
+	return strtolower(preg_replace("/[^A-Za-z0-9]/", "", $str));
+}
+
+function levenshtein_substr($s, $t, $max_edits) {
+	$n = strlen($t);
+	$m = strlen($s);
+	$curr_row = array_fill(0, $n + 1, 0); // d[i]
+	$prev_row = array_fill(0, $n + 1, 0); // d[i - 1]
+	
+	for ($i = 1; $i <= $m; $i++) {
+		$tmp =& $curr_row; // swap the rows => i++
+		$curr_row =& $prev_row;
+		$prev_row =& $tmp;
+
+		$minim = $curr_row[0] = $i;
+		for ($j = 1; $j <= $n; $j++) {
+			if ($s[$i - 1] == $t[$j - 1]) {
+				$value = $prev_row[$j - 1];
+			} else {
+				$value = min(
+					$curr_row[$j - 1], // d[i][j - 1]
+					$prev_row[$j - 1], // d[i - 1][j - 1]
+					$prev_row[$j] // d[i - 1][j]
+				) + 1;
+			}
+			if ($value < $minim) {
+				$minim = $value;
+			}
+			$curr_row[$j] = $value;
+		}
+
+		// Check if previous row will exceed max_edits
+		if ($minim > $max_edits) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**

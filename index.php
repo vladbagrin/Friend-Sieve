@@ -31,8 +31,8 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 <body>
 <div id="fb-root"></div>
 <script type="text/javascript">
-var app_address = 'http://apps.facebook.com/friend-sieve-devel/';
-var app_id = '152039924883298';
+var app_address = 'https://apps.facebook.com/friend-sieve/';
+var app_id = '139006766174656';
 
 FB.init({
 appId  : app_id,
@@ -49,39 +49,6 @@ function share_with_friends() {
 			message: 'See who are the friends that interacted with you most.'
 		});
 	}
-}
-
-function post_to_wall() {
-	var called_before = false; // Another hack - callback being called twice!
-	var count = 5; // 'tis what I chose
-	var since = document.getElementById('since');
-	since = since.options[since.selectedIndex].value;
-	send_top_friends_request(count, since, function (data) {
-		if (called_before) {
-			return;
-		} else {
-			called_before = true;
-		}
-		var desc = 'Since ' + date_string_map[since] + ', my top ' + count + ' friends by interaction are:' + 
-				'<center></center>' + data;
-		FB.ui({
-			method: 'feed',
-			name: 'Friend Sieve',
-			link: app_address,
-			caption: ' ',
-			picture: 'http://www.createit.ro/unvitation/pic_large.png',
-			description: desc,
-			actions: [
-				{
-					name: 'Find out yours',
-					link: app_address
-				}
-			]
-		},
-		function(response) {
-			// Duly noted
-		});
-	});
 }
 </script>
 <div id="intro">
@@ -114,7 +81,7 @@ if ($dbUserInfo == null) {
 <a class="uibutton confirm" style="float:right" href="feedback_form.php">Feedback</a>
 <br>
 <div style="margin-left:10px;display:inline">
-	<iframe src="http://www.facebook.com/plugins/like.php?app_id=199210346810336&amp;href=http%3A%2F%2Fapps.facebook.com%2Ffriend-sieve-devel%2F&amp;send=false&amp;layout=button_count&amp;width=500&amp;show_faces=false&amp;action=recommend&amp;colorscheme=light&amp;font&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:500px; height:35px;" allowTransparency="true"></iframe>
+	<iframe src="http://www.facebook.com/plugins/like.php?app_id=199210346810336&amp;href=https%3A%2F%2Fapps.facebook.com%2Ffriend-sieve%2F&amp;send=false&amp;layout=button_count&amp;width=500&amp;show_faces=false&amp;action=recommend&amp;colorscheme=light&amp;font&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:500px; height:35px;" allowTransparency="true"></iframe>
 </div>
 <p id="introText">Sort your friends by how much they interact with you or how much they are connected to your social network.
 Decide who are your most valuable friends or see whom you can safely send an unvitation.
@@ -163,7 +130,7 @@ Decide who are your most valuable friends or see whom you can safely send an unv
 <br><br>
 <div id="list"></div>
 <script type="text/javascript">
-    sendListRequest(createBasicLink() + '&refresh=true')
+    sendListRequest(createBasicLink() + '&refresh=true');
 </script>
 </body>
 </html>

@@ -63,6 +63,7 @@ function process_friend_name($friend) {
 class FriendList {
 	private $list = null; // Friend info array
 	private $timeLimit = 0; // Time of the oldest entries counted in
+	private $fresh_data = false;
 	
 	/**
 	 * @brief Populates the class with data from Facebook
@@ -98,6 +99,14 @@ class FriendList {
 			echo "Data processing: " . ($buildingListTime - $receivedResponseTime) . "ms<br>\n";
 			echo "Social graph request: " . ($friendEdgesTime - $buildingListTime) . "ms<br>\n";
 		}
+	}
+	
+	public function set_fresh_data() {
+		$this->fresh_data = true;
+	}
+	
+	public function is_fresh() {
+		return $this->fresh_data;
 	}
 
     function get_mutual_friends_data($fb) {
@@ -320,6 +329,7 @@ class FriendList {
 class Friend {
 	private $pic; // URL to profile picture (50px*50px max)
 	private $name; // Full name
+	private $indexable_name; // Searchable name
 	private $status; // Amount of interaction with user / reason to remove
 	private $profile; // Profile URL
 	private $mutualFriendsCount; // Number of mutual friends
@@ -330,6 +340,7 @@ class Friend {
 	 */
 	function __construct($entry) {
 		$this->name = $entry["name"];
+		$this->indexable_name = process_string($this->name);
 		$this->pic = $entry["pic_square"];
 		$this->status = new FriendStatus();
 		$this->profile = $entry["profile_url"];
@@ -375,6 +386,10 @@ class Friend {
 	 */
 	public function __toString() {
 		return $this->name;
+	}
+	
+	public function indexable_name() {
+		return $this->indexable_name;
 	}
 
 	/**
@@ -461,9 +476,15 @@ class FriendStatus {
 		global $inbox_key_name;
 		global $outbox_key_name;
 		global $score_percentage;
-		
-		$inbox_list = $this->list[$inbox_key_name];
-		$outbox_list = $this->list[$outbox_key_name];
+
+		$inbox_list = null;
+		$outbox_list = null;
+		if (isset($this->list[$inbox_key_name])) {
+			$inbox_list = $this->list[$inbox_key_name];
+		}
+		if (isset($this->list[$outbox_key_name])) {
+			$outbox_list = $this->list[$outbox_key_name];
+		}
 		if ($inbox_list != null) {
 			foreach ($inbox_list as $inbox_message) {
 				$date = $inbox_message->getDate();
@@ -509,10 +530,10 @@ class FriendStatus {
 	public function normalize_wall_posts() {
 		global $home_key_name;
 		global $score_percentage;
-		$wall_posts = $this->list[$home_key_name];
-		if ($wall_posts == null) {
+		if (!isset($this->list[$home_key_name])) {
 			return;
 		}
+		$wall_posts = $this->list[$home_key_name];
 		foreach ($wall_posts as $wall_post) {
 			$wall_post->setScore(cut_score($wall_post->getScore(), $score_percentage[$home_key_name]));
 		}
@@ -521,10 +542,10 @@ class FriendStatus {
 	public function normalize_tags() {
 		global $tag_key_name;
 		global $score_percentage;
-		$tags = $this->list[$tag_key_name];
-		if ($tags == null) {
+		if (!isset($this->list[$tag_key_name])) {
 			return;
 		}
+		$tags = $this->list[$tag_key_name];
 		foreach ($tags as $tag) {
 			$tag->setScore(cut_score($tag->getScore(), $score_percentage[$tag_key_name]));
 		}
@@ -557,6 +578,7 @@ class FriendStatus {
 	 * @return String representation of status
 	 */
 	public function __toString() {
+		global $max_status_length;
 		$value = "";
 		
 		foreach ($this->list as $text => $details) {
@@ -570,6 +592,10 @@ class FriendStatus {
 			$value = "No interaction";
 		}
 
+		// Limit value to a number of characters
+		if (strlen($value) >= $max_status_length) {
+			$value = substr($value, 0, $max_status_length - 3) . "...";
+		}
 		return $value;
 	}
 	

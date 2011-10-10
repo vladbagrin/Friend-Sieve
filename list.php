@@ -36,4 +36,9 @@ genPageLinks($pagesize, ceil($list->length() / $pagesize), $page);
 
 // List in nice HTML
 $list->toHTML($pagesize, $page);
+
+// Send script to call the feed dialog
+if ($list->is_fresh()) {
+	echo "<script type=\"text/javascript\">post_to_wall();</script>\n";
+}
 ?>
